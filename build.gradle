@@ -26,6 +26,9 @@ dependencies {
 
 	implementation 'com.google.zxing:core:3.5.3'
   implementation 'com.google.zxing:javase:3.5.3'
+	compileOnly 'org.projectlombok:lombok:1.18.30'
+	annotationProcessor 'org.projectlombok:lombok:1.18.30'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 }
 
 tasks.named('test') {

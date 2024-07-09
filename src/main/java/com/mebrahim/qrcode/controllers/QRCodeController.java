@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.mebrahim.qrcode.constants.MediaTypesEnum;
+import com.mebrahim.qrcode.models.RandomFact;
 import com.mebrahim.qrcode.services.QRCodeService;
+import com.mebrahim.qrcode.services.RandomFactsService;
 import com.mebrahim.qrcode.validators.QRCodeInputs;
 import com.mebrahim.qrcode.validators.ValidContents;
 import com.mebrahim.qrcode.validators.ValidCorrection;
@@ -32,10 +34,12 @@ import java.io.IOException;
 @Validated(QRCodeInputs.class)
 public class QRCodeController {
     private final QRCodeService qrCodeService;
+    private final RandomFactsService randomFactsService;
 
     @Autowired
-    public QRCodeController(QRCodeService qrCodeService) {
+    public QRCodeController(QRCodeService qrCodeService, RandomFactsService randomFactsService) {
         this.qrCodeService = qrCodeService;
+        this.randomFactsService = randomFactsService;
     }
 
     @GetMapping("/health")
@@ -45,16 +49,24 @@ public class QRCodeController {
 
     @GetMapping("/qrcode")
     public ResponseEntity<byte[]> getQrCode(
-            @ValidContents(groups = StageOneValidation.class) @RequestParam() String contents,
+            // @ValidContents(groups = StageOneValidation.class) @RequestParam() String
+            // contents,
             @ValidImageSize(groups = StageTwoValidation.class) @RequestParam(required = false, defaultValue = "250") Integer size,
             @ValidCorrection(groups = StageThreeValidation.class) @RequestParam(required = false, defaultValue = "L") String correction,
             @ValidMediaType(groups = StageFourValidation.class) @RequestParam(required = false, defaultValue = "png") String type)
             throws IOException, WriterException {
-        BufferedImage image = qrCodeService.generateQRCode(size, contents.trim(),
+        BufferedImage image = qrCodeService.generateQRCode(size, randomFactsService.getRandomFact().getText(),
                 ErrorCorrectionLevel.valueOf(correction));
         var baos = new ByteArrayOutputStream();
         ImageIO.write(image, type, baos);
         byte[] bytes = baos.toByteArray();
         return ResponseEntity.ok().contentType(MediaTypesEnum.valueOf(type).getMediaType()).body(bytes);
     }
+
+    @GetMapping("/fact")
+    public ResponseEntity<String> getMethodName() {
+        RandomFact randomFact = randomFactsService.getRandomFact();
+        return ResponseEntity.ok().body(randomFact.getText());
+    }
+
 }
